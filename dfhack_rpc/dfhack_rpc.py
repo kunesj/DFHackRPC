@@ -12,9 +12,9 @@ _logger = logging.getLogger(__name__)
 
 class DFHackRPC(object):
     """
-    The only methods that you need to use are:
+    The only methods that you should use are:
 
-        call_method, bind_method, bind_all_methods, get_proto
+        open_connection, close_connection, bind_method, bind_all_methods, get_proto, call_method, run_command
 
 
     Protocol description:
