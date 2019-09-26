@@ -18,15 +18,18 @@ if __name__ == '__main__':
     print(rpc.call_method('GetVersion', EmptyMessage()))
     print('--------------------------------------------------------------------')
 
-    print(rpc.bind_method('GetDFVersion'))
-    print(rpc.call_method('GetDFVersion', EmptyMessage()))
-    print('--------------------------------------------------------------------')
-
-    print(rpc.bind_method('GetWorldInfo'))
-    print(rpc.call_method('GetWorldInfo', EmptyMessage()))
-    print('--------------------------------------------------------------------')
+    # print(rpc.bind_method('GetDFVersion'))
+    # print(rpc.call_method('GetDFVersion', EmptyMessage()))
+    # print('--------------------------------------------------------------------')
+    #
+    # print(rpc.bind_method('GetWorldInfo'))
+    # print(rpc.call_method('GetWorldInfo', EmptyMessage()))
+    # print('--------------------------------------------------------------------')
 
     print(rpc.run_command('RemoteFortressReader_version'))
+    print('--------------------------------------------------------------------')
+
+    print(rpc.call_method_dict('GetVersion'))
     print('--------------------------------------------------------------------')
 
     rpc.bind_all_methods()

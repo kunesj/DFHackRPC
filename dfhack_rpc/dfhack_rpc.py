@@ -6,6 +6,8 @@ from .default_methods import DEFAULT_METHODS
 import socket
 import struct
 import time
+import json
+import google.protobuf.json_format
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -13,9 +15,11 @@ _logger = logging.getLogger(__name__)
 
 class DFHackRPC(object):
     """
-    The only methods that you should use are:
+    Most important methods:
 
-        open_connection, close_connection, bind_method, bind_all_methods, get_proto, call_method, run_command
+        open_connection, close_connection,
+        bind_method, bind_all_methods,
+        call_method, call_method_dict, run_command
 
 
     Protocol description:
@@ -204,11 +208,27 @@ class DFHackRPC(object):
         """
         return self.build_header(id, len(data)) + data
 
-    # Tools
+    # Proto
+    # https://developers.google.com/protocol-buffers/docs/reference/python/index.html
 
-    @staticmethod
-    def get_proto(full_name):
+    @classmethod
+    def get_proto(cls, full_name):
         return proto_db.GetSymbol(full_name)
+
+    @classmethod
+    def proto2dict(cls, data_obj, including_default_value_fields=True):
+        data_json = google.protobuf.json_format.MessageToJson(
+            data_obj, including_default_value_fields=including_default_value_fields
+        )
+        return json.loads(data_json)
+
+    @classmethod
+    def dict2proto(cls, full_name, data_dict):
+        data_cls = cls.get_proto(full_name)
+        data_json = json.dumps(data_dict)
+        return google.protobuf.json_format.Parse(data_json, data_cls())
+
+    # Tools
 
     def call_method(self, method, data_obj):
         _logger.debug('Calling method "{}"'.format(method))
@@ -236,6 +256,16 @@ class DFHackRPC(object):
                 raise Exception('Unexpected message id {}'.format(id))
 
         return resp_obj, resp_text
+
+    def call_method_dict(self, method, data_dict=None):
+        if method not in self.bound_methods or self.bound_methods[method]['assigned_id'] is None:
+            raise Exception('method not bound')
+
+        data_obj = self.dict2proto(self.bound_methods[method]['input_msg'], data_dict or {})
+        resp_obj, text = self.call_method(method, data_obj)
+        resp_dict = self.proto2dict(resp_obj)
+
+        return resp_dict, text
 
     def bind_method(self, method, input_msg=None, output_msg=None, plugin=None):
         _logger.info('Binding method "{}"'.format(method))
