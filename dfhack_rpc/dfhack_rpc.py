@@ -54,7 +54,7 @@ class DFHackRPC(object):
        closing the socket.
     """
 
-    def __init__(self, dfhack_host='localhost', dfhack_port=5000, sock_timeout=0.1, sock_buff_size=10000):
+    def __init__(self, dfhack_host='localhost', dfhack_port=5000, sock_timeout=0.00001, sock_buff_size=10000):
         self.dfhack_host = dfhack_host
         self.dfhack_port = dfhack_port
 
@@ -83,6 +83,8 @@ class DFHackRPC(object):
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.dfhack_host, self.dfhack_port))
+
+        assert self.sock_timeout > 0
         self.sock.settimeout(self.sock_timeout)
 
         # handshake
