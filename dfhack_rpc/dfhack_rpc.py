@@ -5,6 +5,7 @@ from .default_methods import DEFAULT_METHODS
 
 import socket
 import struct
+import time
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -54,13 +55,21 @@ class DFHackRPC(object):
        closing the socket.
     """
 
-    def __init__(self, dfhack_host='localhost', dfhack_port=5000, sock_timeout=0.00001, sock_buff_size=10000):
+    def __init__(self, dfhack_host='localhost', dfhack_port=5000, sock_timeout=0.000000001, sock_buff_size=10000,
+                 response_timeout=5):
+        """
+        :param dfhack_host: Address of computer running DF
+        :param dfhack_port: DFHack API port
+        :param sock_timeout: Max time between reads from socket
+        :param sock_buff_size:
+        :param response_timeout: How long we will wait for data from DFHack API before raising exception
+        """
         self.dfhack_host = dfhack_host
         self.dfhack_port = dfhack_port
-
         self.sock = None
-        self.sock_timeout = sock_timeout  # max wait between responses AND wait after last response
+        self.sock_timeout = sock_timeout
         self.sock_buff_size = sock_buff_size
+        self.response_timeout = response_timeout
 
         # bound methods
         self.bound_methods = {}
@@ -106,13 +115,18 @@ class DFHackRPC(object):
             self.open_connection()
 
         self.sock.sendall(data)
+        start_time = time.time()
+
         fragments = []
         while True:
             try:
                 chunk = self.sock.recv(self.sock_buff_size)
+                fragments.append(chunk)
             except socket.timeout:
-                break
-            fragments.append(chunk)
+                if len(fragments) > 0:
+                    break
+            if len(fragments) == 0 and (time.time() > start_time + self.response_timeout):
+                raise Exception('No API response detected')
         resp = b''.join(fragments)
 
         return resp
