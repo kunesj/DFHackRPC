@@ -21,6 +21,9 @@ class DFHackRPC(object):
         bind_method, bind_all_methods,
         call_method, call_method_dict, run_command
 
+    If you are getting "In RPC server: I/O error in receive header." messages in DFHack,
+    check that you didn't forget to close API connection with dfhack_rpc.close_connection().
+
 
     Protocol description:
 
@@ -230,11 +233,12 @@ class DFHackRPC(object):
 
     # Tools
 
-    def call_method(self, method, data_obj):
+    def call_method(self, method, data_obj=None):
         _logger.debug('Calling method "{}"'.format(method))
 
         if method not in self.bound_methods or self.bound_methods[method]['assigned_id'] is None:
             raise Exception('method not bound')
+        data_obj = data_obj or self.get_proto(self.bound_methods[method]['input_msg'])()
         assert self.bound_methods[method]['input_msg'] == data_obj.DESCRIPTOR.full_name
 
         data_msg = self.build_message(data_obj.SerializeToString(), id=self.bound_methods[method]['assigned_id'])
